@@ -2,29 +2,22 @@ package qouteall.dimlib;
 
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.Lifecycle;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.MappedRegistry;
-import net.minecraft.core.RegistrationInfo;
-import net.minecraft.core.Registry;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.ClientCommonPacketListener;
+import net.minecraft.network.protocol.game.*;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.level.progress.ChunkProgressListener;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.border.BorderChangeListener;
 import net.minecraft.world.level.border.WorldBorder;
-import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.WorldGenSettings;
 import net.minecraft.world.level.levelgen.WorldOptions;
@@ -34,12 +27,11 @@ import net.minecraft.world.level.storage.WorldData;
 import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import qouteall.dimlib.api.DimensionAPI;
 import qouteall.dimlib.ducks.IMappedRegistry;
 import qouteall.dimlib.ducks.IMinecraftServer;
 import qouteall.dimlib.mixin.common.IEWorldBorder;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
@@ -50,16 +42,57 @@ public class DynamicDimensionsImpl {
     public static boolean isRemovingDimension = false;
     
     public static void init() {
-    
+
+    }
+
+    public static class DelegateBorderChangeListener implements BorderChangeListener {
+        private final WorldBorder worldBorder;
+
+        public DelegateBorderChangeListener(WorldBorder worldBorder) {
+            this.worldBorder = worldBorder;
+        }
+
+        @Override
+        public void onSetSize(WorldBorder worldBorder, double d) {
+            this.worldBorder.setSize(d);
+        }
+
+        @Override
+        public void onLerpSize(WorldBorder worldBorder, double d, double e, long l, long m) {
+            this.worldBorder.lerpSizeBetween(d, e, l, m);
+        }
+
+        @Override
+        public void onSetCenter(WorldBorder worldBorder, double d, double e) {
+            this.worldBorder.setCenter(d, e);
+        }
+
+        @Override
+        public void onSetWarningTime(WorldBorder worldBorder, int i) {
+            this.worldBorder.setWarningTime(i);
+        }
+
+        @Override
+        public void onSetWarningBlocks(WorldBorder worldBorder, int i) {
+            this.worldBorder.setWarningBlocks(i);
+        }
+
+        @Override
+        public void onSetDamagePerBlock(WorldBorder worldBorder, double d) {
+            this.worldBorder.setDamagePerBlock(d);
+        }
+
+        @Override
+        public void onSetSafeZone(WorldBorder worldBorder, double d) {
+            this.worldBorder.setSafeZone(d);
+        }
     }
     
     public static void addDimensionDynamically(
         MinecraftServer server,
-        ResourceLocation dimensionId,
+        Identifier dimensionId,
         LevelStem levelStem
     ) {
-        /**{@link MinecraftServer#createLevels(ChunkProgressListener)}*/
-        
         ResourceKey<Level> dimensionResourceKey = ResourceKey.create(
             Registries.DIMENSION, dimensionId
         );
@@ -93,7 +126,6 @@ public class DynamicDimensionsImpl {
             derivedLevelData,
             dimensionResourceKey,
             levelStem,
-            new DummyProgressListener(),
             false, // isDebug
             obfuscatedSeed,
             ImmutableList.of(),
@@ -102,9 +134,9 @@ public class DynamicDimensionsImpl {
         );
         
         worldBorder.addListener(
-            new BorderChangeListener.DelegateBorderChangeListener(newWorld.getWorldBorder())
+            new DelegateBorderChangeListener(newWorld.getWorldBorder())
         );
-        
+
         ((IMinecraftServer) server).dimlib_addDimensionToWorldMap(dimensionResourceKey, newWorld);
         
         /**
@@ -120,8 +152,9 @@ public class DynamicDimensionsImpl {
             RegistrationInfo.BUILT_IN // use built-in registration info for now
         );
         ((IMappedRegistry) levelStemRegistry).dimlib_setIsFrozen(true);
-        
-        worldBorder.applySettings(serverLevelData.getWorldBorder());
+
+        //@TODO: why was this here?
+//        worldBorder.applySettings(serverLevelData.getWorldBorder());
         
         LOGGER.info("Added Dimension {}", dimensionId);
         
@@ -137,7 +170,8 @@ public class DynamicDimensionsImpl {
     
     public static void removeDimensionDynamically(ServerLevel world) {
         MinecraftServer server = world.getServer();
-        
+
+        assert server != null;
         Validate.isTrue(server.isSameThread());
         
         ResourceKey<Level> dimension = world.dimension();
@@ -148,7 +182,7 @@ public class DynamicDimensionsImpl {
         
         Validate.isTrue(server.isRunning(), "Server is not running");
         
-        LOGGER.info("Started Removing Dimension {}", dimension.location());
+        LOGGER.info("Started Removing Dimension {}", dimension.identifier());
         
         ((IMinecraftServer) server).dimlib_addTask(() -> {
             DimensionAPI.SERVER_PRE_REMOVE_DIMENSION_EVENT.invoker().accept(world);
@@ -166,7 +200,7 @@ public class DynamicDimensionsImpl {
             
             try {
                 while (world.getChunkSource().chunkMap.hasWork()) {
-                    world.getChunkSource().removeTicketsOnClosing();
+                    world.getChunkSource().deactivateTicketsOnClosing();
                     world.getChunkSource().tick(() -> true, false);
                     world.getChunkSource().pollTask();
                     server.pollTask();
@@ -215,11 +249,11 @@ public class DynamicDimensionsImpl {
             // force remove it from registry, so it will not be saved into level.dat
             Registry<LevelStem> levelStemRegistry = server.registryAccess()
                 .lookupOrThrow(Registries.LEVEL_STEM);
-            ((IMappedRegistry) levelStemRegistry).dimlib_forceRemove(dimension.location());
+            ((IMappedRegistry) levelStemRegistry).dimlib_forceRemove(dimension.identifier());
             
-            LOGGER.info("Removed Dimension {}", dimension.location());
+            LOGGER.info("Removed Dimension {}", dimension.identifier());
             
-            Packet<ClientCommonPacketListener> dimSyncPacket = ServerPlayNetworking.createS2CPacket(
+            Packet<@NotNull ClientCommonPacketListener> dimSyncPacket = ServerPlayNetworking.createS2CPacket(
                 DimLibNetworking.DimSyncPacket.createPacket(server)
             );
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
@@ -241,7 +275,7 @@ public class DynamicDimensionsImpl {
         for (ServerLevel serverWorld : server.getAllLevels()) {
             if (serverWorld != overworld) {
                 worldBorder.addListener(
-                    new BorderChangeListener.DelegateBorderChangeListener(serverWorld.getWorldBorder())
+                    new DelegateBorderChangeListener(serverWorld.getWorldBorder())
                 );
             }
         }
@@ -250,12 +284,13 @@ public class DynamicDimensionsImpl {
     
     private static void evacuatePlayersFromDimension(ServerLevel world) {
         MinecraftServer server = world.getServer();
+        assert server != null;
         ServerLevel overworld = server.getLevel(Level.OVERWORLD);
         Validate.notNull(overworld, "Overworld is null");
         
         List<ServerPlayer> players = world.getPlayers(p -> true);
         
-        BlockPos sharedSpawnPos = overworld.getSharedSpawnPos();
+        BlockPos sharedSpawnPos = overworld.getRespawnData().pos();
         
         for (ServerPlayer player : players) {
             player.teleportTo(
@@ -267,33 +302,9 @@ public class DynamicDimensionsImpl {
             player.sendSystemMessage(
                 Component.literal(
                     "Teleported to spawn pos because dimension %s had been removed"
-                        .formatted(world.dimension().location())
+                        .formatted(world.dimension().identifier())
                 )
             );
         }
     }
-    
-    private static class DummyProgressListener implements ChunkProgressListener {
-        
-        @Override
-        public void updateSpawnPos(ChunkPos center) {
-        
-        }
-        
-        @Override
-        public void onStatusChange(ChunkPos chunkPosition, @Nullable ChunkStatus newStatus) {
-        
-        }
-        
-        @Override
-        public void start() {
-        
-        }
-        
-        @Override
-        public void stop() {
-        
-        }
-    }
-    
 }

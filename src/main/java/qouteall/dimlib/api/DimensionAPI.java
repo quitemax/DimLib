@@ -6,7 +6,7 @@ import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -16,6 +16,7 @@ import net.minecraft.world.level.storage.WorldData;
 import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import qouteall.dimlib.ClientDimensionInfo;
 import qouteall.dimlib.DimensionImpl;
 import qouteall.dimlib.DimensionTemplate;
@@ -32,18 +33,18 @@ public class DimensionAPI {
     /**
      * See {@link DimensionAPI#SERVER_DIMENSIONS_LOAD_EVENT}
      */
-    public static interface ServerDimensionsLoadCallback {
+    public interface ServerDimensionsLoadCallback {
         void run(MinecraftServer server);
     }
     
     /**
      * This event is fired when loading custom dimensions when the server is starting.
      * Inside this event, you can:
-     * - use {@link MinecraftServer#registryAccess()} and {@link RegistryAccess#registryOrThrow(ResourceKey)} to access registries (including dimension type registry)
+     * - use {@link MinecraftServer#registryAccess()} and {@link RegistryAccess#lookupOrThrow(ResourceKey)} to access registries (including dimension type registry)
      * - use {@link MinecraftServer#getWorldData()} {@link WorldData#worldGenOptions()} to access world information like seed.
-     * - use {@link DimensionAPI#addDimension(MinecraftServer, ResourceLocation, LevelStem)} to add dimension.
+     * - use {@link DimensionAPI#addDimension(MinecraftServer, Identifier, LevelStem)} to add dimension.
      */
-    public static final Event<ServerDimensionsLoadCallback> SERVER_DIMENSIONS_LOAD_EVENT =
+    public static final Event<@NotNull ServerDimensionsLoadCallback> SERVER_DIMENSIONS_LOAD_EVENT =
         EventFactory.createArrayBacked(
             ServerDimensionsLoadCallback.class,
             (listeners) -> ((server) -> {
@@ -66,7 +67,7 @@ public class DimensionAPI {
      */
     public static void addDimension(
         MinecraftServer server,
-        ResourceLocation dimensionId,
+        Identifier dimensionId,
         LevelStem levelStem
     ) {
         if (((IMinecraftServer) server).dimlib_getIsFinishedCreatingWorlds()) {
@@ -89,19 +90,19 @@ public class DimensionAPI {
      * This can be used when the server worlds are not yet initialized.
      */
     public static boolean dimensionExistsInRegistry(
-        MinecraftServer server, ResourceLocation dimensionId
+        MinecraftServer server, Identifier dimensionId
     ) {
         // if the server is not yet running, getLevel() doesn't work
         return DimensionImpl.getDimensionRegistry(server).containsKey(dimensionId);
     }
     
     /**
-     * Similar to {@link DimensionAPI#addDimension(MinecraftServer, ResourceLocation, LevelStem)},
+     * Similar to {@link DimensionAPI#addDimension(MinecraftServer, Identifier, LevelStem)},
      * but will not add the dimension if it already exists.
      */
     public static void addDimensionIfNotExists(
         MinecraftServer server,
-        ResourceLocation dimensionId,
+        Identifier dimensionId,
         Supplier<LevelStem> levelStem
     ) {
         if (dimensionExistsInRegistry(server, dimensionId)) {
@@ -118,7 +119,7 @@ public class DimensionAPI {
      */
     public static void addDimensionDynamically(
         MinecraftServer server,
-        ResourceLocation dimensionId,
+        Identifier dimensionId,
         LevelStem levelStem
     ) {
         Validate.isTrue(server.isRunning(), "The server is not running");
@@ -133,6 +134,7 @@ public class DimensionAPI {
      * Does not delete that dimension's world saving files.
      */
     public static void removeDimensionDynamically(ServerLevel world) {
+        assert world.getServer() != null;
         if (!world.getServer().isRunning()) {
             LOGGER.error(
                 "Cannot remove dimension at this time {}", world, new Throwable()
@@ -146,14 +148,14 @@ public class DimensionAPI {
     /**
      * see {@link DimensionAPI#SERVER_DIMENSION_DYNAMIC_UPDATE_EVENT}
      */
-    public static interface ServerDynamicUpdateListener {
+    public interface ServerDynamicUpdateListener {
         void run(MinecraftServer server, Set<ResourceKey<Level>> dimensions);
     }
     
     /**
      * see {@link DimensionAPI#CLIENT_DIMENSION_UPDATE_EVENT}
      */
-    public static interface ClientDynamicUpdateListener {
+    public interface ClientDynamicUpdateListener {
         void run(Set<ResourceKey<Level>> dimensions);
     }
     
@@ -161,7 +163,7 @@ public class DimensionAPI {
      * Will be triggered when the server dynamically add or remove a dimension.
      * Does not trigger during server initialization.
      */
-    public static final Event<ServerDynamicUpdateListener> SERVER_DIMENSION_DYNAMIC_UPDATE_EVENT =
+    public static final Event<@NotNull ServerDynamicUpdateListener> SERVER_DIMENSION_DYNAMIC_UPDATE_EVENT =
         EventFactory.createArrayBacked(
             ServerDynamicUpdateListener.class,
             arr -> (server, dims) -> {
@@ -179,7 +181,7 @@ public class DimensionAPI {
     /**
      * Will be triggered when the client receives dimension data synchronization.
      */
-    public static final Event<ClientDynamicUpdateListener> CLIENT_DIMENSION_UPDATE_EVENT =
+    public static final Event<@NotNull ClientDynamicUpdateListener> CLIENT_DIMENSION_UPDATE_EVENT =
         EventFactory.createArrayBacked(
             ClientDynamicUpdateListener.class,
             arr -> (set) -> {
@@ -199,6 +201,7 @@ public class DimensionAPI {
      * Can be used when the server is running.
      */
     public static boolean isDimensionAlive(ServerLevel world) {
+        assert world.getServer() != null;
         return world.getServer().getLevel(world.dimension()) == world;
     }
     
@@ -250,14 +253,14 @@ public class DimensionAPI {
     /**
      * see {@link DimensionAPI#SERVER_PRE_REMOVE_DIMENSION_EVENT}
      */
-    public static interface PreRemoveDimensionCallback {
+    public interface PreRemoveDimensionCallback {
         void accept(ServerLevel world);
     }
     
     /**
      * This event is triggered right before dynamically removing a dimension on server.
      */
-    public static final Event<PreRemoveDimensionCallback> SERVER_PRE_REMOVE_DIMENSION_EVENT =
+    public static final Event<@NotNull PreRemoveDimensionCallback> SERVER_PRE_REMOVE_DIMENSION_EVENT =
         EventFactory.createArrayBacked(
             PreRemoveDimensionCallback.class,
             (listeners) -> ((world) -> {

@@ -16,8 +16,7 @@ import net.minecraft.core.MappedRegistry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.RegistryOps;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -25,8 +24,6 @@ import net.minecraft.world.level.dimension.LevelStem;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import qouteall.dimlib.api.DimensionAPI;
-
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class DimsCommand {
@@ -35,7 +32,9 @@ public class DimsCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         LiteralArgumentBuilder<CommandSourceStack> builder = Commands
             .literal("dims")
-            .requires(source -> source.hasPermission(2));
+                //@TODO: not sure how to update yet
+//            .requires(source -> source.permissions().hasPermission(PermissionLevel.GAMEMASTERS))
+            ;
         
         builder.then(Commands
             .literal("clone_dimension")
@@ -45,8 +44,8 @@ public class DimsCommand {
                         ServerLevel templateDimension =
                             DimensionArgument.getDimension(context, "templateDimension");
                         String newDimensionId = StringArgumentType.getString(context, "newDimensionID");
-                        
-                        ResourceLocation newDimId = parseDimensionId(context, newDimensionId);
+
+                        Identifier newDimId = parseDimensionId(context, newDimensionId);
                         
                         if (newDimId == null) {
                             return 0;
@@ -97,7 +96,7 @@ public class DimsCommand {
                     context.getSource().sendSuccess(() -> Component.literal(
                         ("Dynamically removed dimension %s . Its world file is not yet deleted. " +
                             "Note: if the datapack config for that dimension exists, the dimension will be re-added after server restart.")
-                            .formatted(dimension.dimension().location())
+                            .formatted(dimension.dimension().identifier())
                     ), true);
                     
                     return 0;
@@ -112,7 +111,7 @@ public class DimsCommand {
                 MutableComponent text = Component.literal(
                     server.levelKeys()
                         .stream()
-                        .map(k -> k.location().toString())
+                        .map(k -> k.identifier().toString())
                         .sorted()
                         .collect(Collectors.joining("\n"))
                 );
@@ -131,7 +130,7 @@ public class DimsCommand {
                     MappedRegistry<LevelStem> dimensionRegistry =
                         DimensionImpl.getDimensionRegistry(world.getServer());
                     
-                    LevelStem levelStem = dimensionRegistry.getValue(world.dimension().location());
+                    LevelStem levelStem = dimensionRegistry.getValue(world.dimension().identifier());
                     
                     if (levelStem == null) {
                         context.getSource().sendFailure(
@@ -168,12 +167,12 @@ public class DimsCommand {
     }
     
     @Nullable
-    private static ResourceLocation parseDimensionId(
+    private static Identifier parseDimensionId(
         CommandContext<CommandSourceStack> context, String newDimensionId
     ) {
-        ResourceLocation newDimId;
+        Identifier newDimId;
         try {
-            newDimId = ResourceLocation.parse(newDimensionId);
+            newDimId = Identifier.parse(newDimensionId);
         }
         catch (Exception e) {
             context.getSource().sendFailure(Component.literal("Invalid dimension id"));
@@ -205,8 +204,8 @@ public class DimsCommand {
         String newDimensionId = StringArgumentType.getString(
             context, "newDimensionId"
         );
-        
-        ResourceLocation newDimId = parseDimensionId(context, newDimensionId);
+
+        Identifier newDimId = parseDimensionId(context, newDimensionId);
         
         if (newDimId == null) {
             return 0;
@@ -224,7 +223,7 @@ public class DimsCommand {
     }
     
     private static void cloneDimension(
-        ServerLevel templateDimension, ResourceLocation newDimId
+        ServerLevel templateDimension, Identifier newDimId
     ) {
         // may throw exception here
         

@@ -1,12 +1,11 @@
 package qouteall.dimlib;
 
-import com.mojang.serialization.Lifecycle;
 import net.minecraft.core.MappedRegistry;
 import net.minecraft.core.RegistrationInfo;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.WorldOptions;
@@ -25,13 +24,13 @@ public class DimensionImpl {
     public static boolean suppressExperimentalWarning = false;
     
     public static void directlyRegisterLevelStem(
-        MinecraftServer server, ResourceLocation dimensionId, LevelStem levelStem
+        MinecraftServer server, Identifier dimensionId, LevelStem levelStem
     ) {
         RegistryAccess.Frozen registryAccess = server.registryAccess();
         
         WorldData worldData = server.getWorldData();
         WorldOptions worldOptions = worldData.worldGenOptions();
-        
+
         MappedRegistry<LevelStem> levelStems = (MappedRegistry<LevelStem>)
             registryAccess.lookupOrThrow(Registries.LEVEL_STEM);
         

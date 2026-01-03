@@ -5,7 +5,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelStorageSource;
@@ -67,9 +66,9 @@ public abstract class MixinMinecraftServer
     @Unique
     private List<Runnable> dimlib_taskList;
     
-    @Inject(method = "Lnet/minecraft/server/MinecraftServer;createLevels(Lnet/minecraft/server/level/progress/ChunkProgressListener;)V", at = @At("HEAD"))
+    @Inject(method = "Lnet/minecraft/server/MinecraftServer;createLevels()V", at = @At("HEAD"))
     private void onBeforeCreateWorlds(
-        ChunkProgressListener worldGenerationProgressListener, CallbackInfo ci
+        CallbackInfo ci
     ) {
         Validate.isTrue(
             !ip_canDirectlyRegisterDimension, "invalid server initialization status"
@@ -84,7 +83,7 @@ public abstract class MixinMinecraftServer
     }
     
     @Inject(
-        method = "Lnet/minecraft/server/MinecraftServer;createLevels(Lnet/minecraft/server/level/progress/ChunkProgressListener;)V",
+        method = "Lnet/minecraft/server/MinecraftServer;createLevels()V",
         at = @At("RETURN")
     )
     private void onFinishedLoadingAllWorlds(
@@ -97,7 +96,7 @@ public abstract class MixinMinecraftServer
     public void dimlib_addDimensionToWorldMap(ResourceKey<Level> dim, ServerLevel world) {
         // use read-copy-update to avoid concurrency issues
         LinkedHashMap<ResourceKey<Level>, ServerLevel> newMap =
-            Maps.<ResourceKey<Level>, ServerLevel>newLinkedHashMap();
+            Maps.newLinkedHashMap();
         
         Map<ResourceKey<Level>, ServerLevel> oldMap = this.levels;
         
@@ -111,7 +110,7 @@ public abstract class MixinMinecraftServer
     public void dimlib_removeDimensionFromWorldMap(ResourceKey<Level> dimension) {
         // use read-copy-update to avoid concurrency issues
         LinkedHashMap<ResourceKey<Level>, ServerLevel> newMap =
-            Maps.<ResourceKey<Level>, ServerLevel>newLinkedHashMap();
+            Maps.newLinkedHashMap();
         
         Map<ResourceKey<Level>, ServerLevel> oldMap = this.levels;
         

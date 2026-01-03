@@ -29,7 +29,7 @@ public class MixinPlayerList {
     ) {
         player.connection.send(
             ServerPlayNetworking.createS2CPacket(
-                DimLibNetworking.DimSyncPacket.createPacket(player.server)
+                DimLibNetworking.DimSyncPacket.createPacket(player.level().getServer())
             )
         );
     }

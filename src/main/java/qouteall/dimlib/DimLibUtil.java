@@ -12,8 +12,9 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
 
@@ -34,7 +35,7 @@ public class DimLibUtil {
         gsonBuilder.setPrettyPrinting();
         
         gsonBuilder.registerTypeAdapter(
-            new TypeToken<ResourceKey<Level>>() {}.getType(),
+            new TypeToken<@NotNull ResourceKey<Level>>() {}.getType(),
             new DimensionIDJsonAdapter()
         );
         
@@ -50,13 +51,13 @@ public class DimLibUtil {
         ) throws JsonParseException {
             String str = json.getAsString();
             return ResourceKey.create(
-                Registries.DIMENSION, ResourceLocation.parse(str)
+                Registries.DIMENSION, Identifier.parse(str)
             );
         }
         
         @Override
         public JsonElement serialize(ResourceKey<Level> src, Type typeOfSrc, JsonSerializationContext context) {
-            return new JsonPrimitive(src.location().toString());
+            return new JsonPrimitive(src.identifier().toString());
         }
     }
 }
