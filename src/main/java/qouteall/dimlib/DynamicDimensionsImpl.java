@@ -1,7 +1,6 @@
 package qouteall.dimlib;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.serialization.DynamicOps;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.Registries;
@@ -19,14 +18,12 @@ import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.border.BorderChangeListener;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.dimension.LevelStem;
-import net.minecraft.world.level.levelgen.WorldGenSettings;
-import net.minecraft.world.level.levelgen.WorldOptions;
 import net.minecraft.world.level.storage.DerivedLevelData;
 import net.minecraft.world.level.storage.ServerLevelData;
 import net.minecraft.world.level.storage.WorldData;
 import org.apache.commons.lang3.Validate;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.jetbrains.annotations.NotNull;
 import qouteall.dimlib.api.DimensionAPI;
 import qouteall.dimlib.ducks.IMappedRegistry;
@@ -37,7 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 
 public class DynamicDimensionsImpl {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LoggerFactory.getLogger(DynamicDimensionsImpl.class);
     
     public static boolean isRemovingDimension = false;
     
@@ -138,11 +135,7 @@ public class DynamicDimensionsImpl {
 
         ((IMinecraftServer) server).dimlib_addDimensionToWorldMap(dimensionResourceKey, newWorld);
         
-        /**
-         * register it into registry, so it will be saved in
-         * {@link WorldGenSettings#encode(DynamicOps, WorldOptions, RegistryAccess)} ,
-         * so it will be saved into level.dat
-         * */
+        // register it into registry, so it will be saved into level.dat
         Registry<LevelStem> levelStemRegistry = server.registryAccess().lookupOrThrow(Registries.LEVEL_STEM);
         ((IMappedRegistry) levelStemRegistry).dimlib_setIsFrozen(false);
         ((MappedRegistry<LevelStem>) levelStemRegistry).register(
@@ -152,9 +145,6 @@ public class DynamicDimensionsImpl {
         );
         ((IMappedRegistry) levelStemRegistry).dimlib_setIsFrozen(true);
 
-        //@TODO: why was this here?
-//        worldBorder.applySettings(serverLevelData.getWorldBorder());
-        
         LOGGER.info("Added Dimension {}", dimensionId);
         
         var dimSyncPacket = ServerPlayNetworking.createClientboundPacket(

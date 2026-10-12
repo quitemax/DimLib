@@ -166,11 +166,14 @@ public abstract class MixinMinecraftServer
     
     @Override
     public void dimlib_processTasks() {
-        if (dimlib_taskList != null) {
-            for (Runnable task : dimlib_taskList) {
+        // detach the list first, so tasks can add new tasks (processed in next tick)
+        // without causing ConcurrentModificationException
+        List<Runnable> tasks = dimlib_taskList;
+        if (tasks != null) {
+            dimlib_taskList = null;
+            for (Runnable task : tasks) {
                 task.run();
             }
-            dimlib_taskList = null;
         }
     }
 }

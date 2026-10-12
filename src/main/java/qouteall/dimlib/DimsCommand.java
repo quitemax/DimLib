@@ -1,6 +1,7 @@
 package qouteall.dimlib;
 
 import com.google.gson.JsonElement;
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -32,9 +33,7 @@ public class DimsCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         LiteralArgumentBuilder<CommandSourceStack> builder = Commands
             .literal("dims")
-                //@TODO: not sure how to update yet
-//            .requires(source -> source.permissions().hasPermission(PermissionLevel.GAMEMASTERS))
-            ;
+            .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS));
         
         builder.then(Commands
             .literal("clone_dimension")
@@ -59,7 +58,7 @@ public class DimsCommand {
                             "Dynamically added dimension %s".formatted(newDimensionId)
                         ), true);
                         
-                        return 0;
+                        return Command.SINGLE_SUCCESS;
                     })
                 )
             )
@@ -99,7 +98,7 @@ public class DimsCommand {
                             .formatted(dimension.dimension().identifier())
                     ), true);
                     
-                    return 0;
+                    return Command.SINGLE_SUCCESS;
                 })
             )
         );
@@ -118,7 +117,7 @@ public class DimsCommand {
                 
                 context.getSource().sendSuccess(() -> text, false);
                 
-                return 0;
+                return Command.SINGLE_SUCCESS;
             }));
         
         builder.then(Commands.literal("view_dim_config")
@@ -151,14 +150,14 @@ public class DimsCommand {
                             () -> Component.literal(jsonStr),
                             true
                         );
+                        return Command.SINGLE_SUCCESS;
                     }
                     else {
                         context.getSource().sendFailure(Component.literal(
                             encoded.error().toString()
                         ));
+                        return 0;
                     }
-                    
-                    return 0;
                 })
             )
         );
@@ -190,7 +189,7 @@ public class DimsCommand {
         
         if (DimensionAPI.dimensionExistsInRegistry(server, newDimId)) {
             context.getSource().sendFailure(
-                Component.literal("Dimension" + newDimId + " already exists")
+                Component.literal("Dimension " + newDimId + " already exists")
             );
             return null;
         }
@@ -219,7 +218,7 @@ public class DimsCommand {
             template.createLevelStem(server)
         );
         
-        return 0;
+        return Command.SINGLE_SUCCESS;
     }
     
     private static void cloneDimension(
