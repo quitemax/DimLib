@@ -31,7 +31,7 @@ public abstract class MixinMinecraftServer
     extends ReentrantBlockableEventLoop<TickTask> implements IMinecraftServer {
     
     public MixinMinecraftServer(String name) {
-        super(name);
+        super(name, false);
         throw new RuntimeException();
     }
     
@@ -136,6 +136,11 @@ public abstract class MixinMinecraftServer
     @Override
     public LevelStorageSource.LevelStorageAccess dimlib_getStorageSource() {
         return storageSource;
+    }
+    
+    @Override
+    public void dimlib_pollTask() {
+        pollTask();
     }
     
     @Override

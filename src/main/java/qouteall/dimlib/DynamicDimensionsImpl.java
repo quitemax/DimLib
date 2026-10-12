@@ -112,7 +112,7 @@ public class DynamicDimensionsImpl {
         WorldData worldData = server.getWorldData();
         ServerLevelData serverLevelData = worldData.overworldData();
         
-        long seed = worldData.worldGenOptions().seed();
+        long seed = server.getWorldGenSettings().options().seed();
         long obfuscatedSeed = BiomeManager.obfuscateSeed(seed);
         
         DerivedLevelData derivedLevelData = new DerivedLevelData(
@@ -129,8 +129,7 @@ public class DynamicDimensionsImpl {
             false, // isDebug
             obfuscatedSeed,
             ImmutableList.of(),
-            false, // only true for overworld
-            overworld.getRandomSequences()
+            false // only true for overworld
         );
         
         worldBorder.addListener(
@@ -158,7 +157,7 @@ public class DynamicDimensionsImpl {
         
         LOGGER.info("Added Dimension {}", dimensionId);
         
-        var dimSyncPacket = ServerPlayNetworking.createS2CPacket(
+        var dimSyncPacket = ServerPlayNetworking.createClientboundPacket(
             DimLibNetworking.DimSyncPacket.createPacket(server)
         );
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
@@ -203,7 +202,7 @@ public class DynamicDimensionsImpl {
                     world.getChunkSource().deactivateTicketsOnClosing();
                     world.getChunkSource().tick(() -> true, false);
                     world.getChunkSource().pollTask();
-                    server.pollTask();
+                    ((IMinecraftServer) server).dimlib_pollTask();
                     
                     if (System.nanoTime() - lastLogTime > DimLibUtil.secondToNano(1)) {
                         lastLogTime = System.nanoTime();
@@ -253,7 +252,7 @@ public class DynamicDimensionsImpl {
             
             LOGGER.info("Removed Dimension {}", dimension.identifier());
             
-            Packet<@NotNull ClientCommonPacketListener> dimSyncPacket = ServerPlayNetworking.createS2CPacket(
+            Packet<@NotNull ClientCommonPacketListener> dimSyncPacket = ServerPlayNetworking.createClientboundPacket(
                 DimLibNetworking.DimSyncPacket.createPacket(server)
             );
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {

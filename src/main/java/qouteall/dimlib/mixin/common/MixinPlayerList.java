@@ -28,7 +28,7 @@ public class MixinPlayerList {
         CallbackInfo ci
     ) {
         player.connection.send(
-            ServerPlayNetworking.createS2CPacket(
+            ServerPlayNetworking.createClientboundPacket(
                 DimLibNetworking.DimSyncPacket.createPacket(player.level().getServer())
             )
         );

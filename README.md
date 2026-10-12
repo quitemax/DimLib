@@ -11,6 +11,18 @@ If you only want the functionality of disabling the warning, this mod is only re
 
 All APIs are in `DimensionAPI` class. You can refer to the javadoc.
 
+### Supported versions
+
+This branch (`26.3`) targets **Minecraft 26.3** (Fabric Loader >= 0.19.5, Fabric API, Java 25). Minecraft 26.x is unobfuscated, so the project builds with the non-remapping Loom plugin (`net.fabricmc.fabric-loom`) and no mappings. Other Minecraft versions live in their own branches.
+
+### Building and running
+
+```
+./gradlew build       # jar is in build/libs
+./gradlew runClient   # dev client
+./gradlew runServer   # dev server (accept the EULA in run/eula.txt first)
+```
+
 ### Commands
 
 #### `/dims add_dimension <newDimensionId> <preset>`
@@ -47,6 +59,15 @@ maven { url 'https://jitpack.io' }
 ```
 
 Add this into `dependencies`
+
+For Minecraft 26.x (unobfuscated, no remapping):
+```
+implementation("com.github.iPortalTeam:DimLib:${dimlib_version}") {
+    exclude(group: "net.fabricmc.fabric-api")
+}
+```
+
+For older obfuscated versions:
 ```
 modApi("com.github.iPortalTeam:DimLib:${dimlib_version}") {
     exclude(group: "net.fabricmc.fabric-api")

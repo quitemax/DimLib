@@ -127,7 +127,7 @@ public class DimLibNetworking {
     }
     
     public static void init() {
-        PayloadTypeRegistry.playS2C().register(
+        PayloadTypeRegistry.clientboundPlay().register(
             DimSyncPacket.TYPE, DimSyncPacket.CODEC
         );
     }

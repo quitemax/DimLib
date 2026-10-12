@@ -26,4 +26,6 @@ public interface IMinecraftServer {
     void dimlib_addTask(Runnable task);
     
     void dimlib_processTasks();
+    
+    void dimlib_pollTask();
 }
