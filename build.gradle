@@ -13,6 +13,17 @@ base {
 	archivesName = project.archives_base_name
 }
 
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		"dimlib" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
 repositories {
 	mavenCentral()
 
@@ -32,7 +43,7 @@ dependencies {
 	implementation "maven.modrinth:midnightlib:${project.midnightlib_version}"
 	include "maven.modrinth:midnightlib:${project.midnightlib_version}"
 
-	compileOnly "maven.modrinth:modmenu:${modmenu_version}"
+	clientCompileOnly "maven.modrinth:modmenu:${modmenu_version}"
 	localRuntime "maven.modrinth:modmenu:${modmenu_version}"
 }
 

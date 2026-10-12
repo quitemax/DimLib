@@ -10,11 +10,6 @@
     "common.MixinPrimaryLevelData",
     "common.MixinWorldDimensions"
   ],
-  "client": [
-    "client.IClientPacketListener",
-    "client.MixinBackupConfirmScreen",
-    "client.MixinMinecraft"
-  ],
   "injectors": {
     "defaultRequire": 1
   }

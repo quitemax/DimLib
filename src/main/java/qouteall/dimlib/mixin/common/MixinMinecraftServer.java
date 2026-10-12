@@ -58,10 +58,10 @@ public abstract class MixinMinecraftServer
     protected abstract void waitUntilNextTick();
     
     @Unique
-    private boolean ip_canDirectlyRegisterDimension = false;
+    private boolean dimlib_canDirectlyRegisterDimension = false;
     
     @Unique
-    private boolean ip_finishedCreatingWorlds = false;
+    private boolean dimlib_finishedCreatingWorlds = false;
     
     @Unique
     private List<Runnable> dimlib_taskList;
@@ -71,15 +71,15 @@ public abstract class MixinMinecraftServer
         CallbackInfo ci
     ) {
         Validate.isTrue(
-            !ip_canDirectlyRegisterDimension, "invalid server initialization status"
+            !dimlib_canDirectlyRegisterDimension, "invalid server initialization status"
         );
-        ip_canDirectlyRegisterDimension = true;
+        dimlib_canDirectlyRegisterDimension = true;
         
         DimensionAPI.SERVER_DIMENSIONS_LOAD_EVENT.invoker().run(
             (MinecraftServer) (Object) this
         );
         
-        ip_canDirectlyRegisterDimension = false;
+        dimlib_canDirectlyRegisterDimension = false;
     }
     
     @Inject(
@@ -89,7 +89,7 @@ public abstract class MixinMinecraftServer
     private void onFinishedLoadingAllWorlds(
         CallbackInfo ci
     ) {
-        ip_finishedCreatingWorlds = true;
+        dimlib_finishedCreatingWorlds = true;
     }
     
     @Override
@@ -125,12 +125,12 @@ public abstract class MixinMinecraftServer
     
     @Override
     public boolean dimlib_getCanDirectlyRegisterDimensions() {
-        return ip_canDirectlyRegisterDimension;
+        return dimlib_canDirectlyRegisterDimension;
     }
     
     @Override
     public boolean dimlib_getIsFinishedCreatingWorlds() {
-        return ip_finishedCreatingWorlds;
+        return dimlib_finishedCreatingWorlds;
     }
     
     @Override

@@ -6,3 +6,5 @@ Update to Minecraft 26.3.
 - Restore the permission requirement of `/dims` commands (game master level); it was lost in the previous port.
 - Fix `ConcurrentModificationException` when a queued dimension task schedules another task.
 - Commands return success value; unify logging to slf4j; remove stale code.
+- Split client code into a separate `client` source set (`src/client`), with its own mixin config.
+- Rename leftover `ip_` prefixes to `dimlib_`.

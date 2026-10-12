@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "qouteall.dimlib.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "client.IClientPacketListener",
+    "client.MixinBackupConfirmScreen",
+    "client.MixinMinecraft"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

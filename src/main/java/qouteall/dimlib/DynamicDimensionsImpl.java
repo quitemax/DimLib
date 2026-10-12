@@ -259,7 +259,7 @@ public class DynamicDimensionsImpl {
         
         WorldBorder worldBorder = overworld.getWorldBorder();
         List<BorderChangeListener> borderChangeListeners =
-            ((IEWorldBorder) worldBorder).ip_getListeners();
+            ((IEWorldBorder) worldBorder).dimlib_getListeners();
         borderChangeListeners.clear();
         for (ServerLevel serverWorld : server.getAllLevels()) {
             if (serverWorld != overworld) {

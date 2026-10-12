@@ -10,5 +10,5 @@ import java.util.List;
 @Mixin(WorldBorder.class)
 public interface IEWorldBorder {
     @Accessor("listeners")
-    List<BorderChangeListener> ip_getListeners();
+    List<BorderChangeListener> dimlib_getListeners();
 }

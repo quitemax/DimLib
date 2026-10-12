@@ -11,5 +11,5 @@ import java.util.Set;
 @Mixin(ClientPacketListener.class)
 public interface IClientPacketListener {
     @Accessor("levels")
-    void ip_setLevels(Set<ResourceKey<Level>> arg);
+    void dimlib_setLevels(Set<ResourceKey<Level>> arg);
 }
